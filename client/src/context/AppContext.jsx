@@ -357,15 +357,19 @@ export const AppProvider = ({ children }) => {
      */
     const logout = async () => {
         try {
+            // Attempt to tell the server to clear cookies
             await authService.logout();
+            toast.success('Logged out');
+        } catch (error) {
+            console.log("Logout API error (ignoring to force UI logout):", error);
+            // We don't toast.error here because the user just wants to leave
+        } finally {
+            // Force wipe all local state
             setUser(null);
             localStorage.removeItem('user');
             setCartItems([]);
             localStorage.removeItem('cartItems');
             navigate('/login');
-            toast.success('Logged out');
-        } catch (error) {
-            toast.error(error.message);
         }
     }
 

@@ -307,15 +307,21 @@ export const refreshToken = async (req, res) => {
 }
 // ========= LOGOUT USER ==============
 export const logout = (req, res) => {
-    res.clearCookie('accessToken',{
-        httpOnly : true,
-        secure : process.env.NODE_ENV === 'production',
-        sameSite : process.env.NODE_ENV === 'production' ? 'none' : 'strict'
-    })
-    res.clearCookie('refreshToken',{
-        
-    })
-    res.json({ success: true })
+    
+    // These options MUST match 'setAuthCookies' exactly
+    const cookieOptions = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Changed 'strict' to 'lax'
+    };
+
+    // Clear Access Token
+    res.clearCookie('accessToken', cookieOptions);
+
+    // Clear Refresh Token
+    res.clearCookie('refreshToken', cookieOptions);
+
+    res.json({ success: true, message: 'Logged out successfully' });
 }
 
 // ========= SEND RESET OTP ============

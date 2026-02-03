@@ -22,7 +22,8 @@ connectCloudinary()
 // 2. Define the allowed origins correctly
 const allowedOrigins = [
     'http://localhost:5173',
-    process.env.FRONTEND_URL 
+    process.env.FRONTEND_URL,
+    'https://the-foot-shop-client.vercel.app'
 ];
 
 // Uses express.raw() to preserve the digital signature
