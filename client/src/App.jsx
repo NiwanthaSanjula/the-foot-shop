@@ -1,5 +1,5 @@
 import React from 'react'
-import { Toaster} from 'react-hot-toast'
+import { Toaster } from 'react-hot-toast'
 import ShopLayout from './components/layout/ShopLayout'
 import { Route, Routes } from 'react-router-dom'
 import AdminLayout from './components/layout/AdminLayout'
@@ -22,6 +22,7 @@ import Orders from './pages/admin/Orders'
 import AddProduct from './pages/admin/AddProduct'
 import AllProducts from './pages/admin/AllProducts'
 import AllUsers from './pages/admin/AllUsers'
+import Verify from './pages/shop/Verify'
 
 
 const App = () => {
@@ -31,16 +32,17 @@ const App = () => {
 
       <Routes>
         {/*PUBLIC SHOP ROUTES */}
-        <Route path='/' element={<ShopLayout/>}>
-          < Route index element={<Home/>} />
-          < Route path="shop" element={<Shop/>} />
-          < Route path="product/:productId" element={<ProductDetails/>} />
-          < Route path="about-us" element={<AboutUs/>} />
-          < Route path="contact-us" element={<ContactUs/>} />
-          < Route path="cart" element={<Cart/>} />
-          < Route path="guest-orders" element={<GuestOrders/>} />
-          <Route path='/login' element={<Auth/>} />
-          <Route path='/reset-password' element={<ForgotPassword/>} />
+        <Route path='/' element={<ShopLayout />}>
+          < Route index element={<Home />} />
+          < Route path="shop" element={<Shop />} />
+          < Route path="product/:productId" element={<ProductDetails />} />
+          < Route path="about-us" element={<AboutUs />} />
+          < Route path="contact-us" element={<ContactUs />} />
+          < Route path="cart" element={<Cart />} />
+          < Route path="guest-orders" element={<GuestOrders />} />
+          <Route path="verify" element={<Verify />} />
+          <Route path='/login' element={<Auth />} />
+          <Route path='/reset-password' element={<ForgotPassword />} />
 
           {/*Protected routes*/}
           <Route
@@ -70,7 +72,7 @@ const App = () => {
           />
         </Route>
 
-        
+
         {/*ADMIN DASHBOARD ROUTES */}
         <Route
           path="/admin"
@@ -80,11 +82,11 @@ const App = () => {
             </AdminRoute>
           }
         >
-          < Route index element={<Dashboard/>} />
-          < Route path="users" element={<AllUsers/>} />
-          < Route path="orders" element={<Orders/>} />
-          < Route path="add-product" element={<AddProduct/>} />
-          < Route path="all-products" element={<AllProducts/>} />
+          < Route index element={<Dashboard />} />
+          < Route path="users" element={<AllUsers />} />
+          < Route path="orders" element={<Orders />} />
+          < Route path="add-product" element={<AddProduct />} />
+          < Route path="all-products" element={<AllProducts />} />
         </Route>
 
       </Routes>

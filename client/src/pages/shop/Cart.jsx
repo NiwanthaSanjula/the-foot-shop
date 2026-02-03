@@ -122,33 +122,18 @@ const Cart = () => {
             let deliveryAddress = null;
 
             if (user) {
-                // --- LOGGED IN USER LOGIC ---
-                if (!selectedAddressId) {
-                    return toast.error("Please select an address");
-                }
-
+                if (!selectedAddressId) return toast.error("Please select an address");
                 const savedAddr = addresses.find(a => a._id === selectedAddressId);
+                if (!savedAddr) return toast.error("Address not found");
 
-                if (!savedAddr) {
-                    return toast.error("Address not found");
-                }
-
-                // === FIX IS HERE ===
-                // We must combine the saved physical address with the User's account email
                 deliveryAddress = {
                     ...savedAddr,
-                    email: user.email // Inject the email from the User Context
+                    email: user.email
                 };
-
             } else {
-                // --- GUEST LOGIC ---
                 const { fullName, email, phoneNumber, street, city, district, postalCode } = guestAddress;
-
                 if (!fullName?.trim()) return toast.error("Full name is required");
-
-                // Uncomment this validation to prevent Guest errors too!
                 if (!email?.trim()) return toast.error("Email is required");
-
                 if (!phoneNumber?.trim()) return toast.error("Phone number is required");
                 if (!street?.trim()) return toast.error("Street is required");
                 if (!city?.trim()) return toast.error("City is required");
@@ -163,7 +148,6 @@ const Cart = () => {
             const shippingCost = 5.00;
             const total = subtotal + shippingCost;
 
-            // ========== BUILD ORDER DATA ==========
             const orderData = {
                 items: cartItems,
                 address: deliveryAddress,
@@ -172,27 +156,27 @@ const Cart = () => {
                 note: orderNote
             };
 
-            console.log('📦 Order Data:', orderData);  // DEBUG
-
             // ========== PLACE ORDER ==========
             setGlobalLoading(true);
-
             const response = await orderService.placeOrder(orderData);
 
-            console.log('✓ Order Response:', response);  // DEBUG
-
             if (response.success) {
-                // Clear cart
+
+                // === STRIPE REDIRECT LOGIC ===
+                if (paymentMethod === 'stripe') {
+                    // Redirect to Stripe Checkout Page
+                    window.location.replace(response.session_url);
+                    return; // Stop here, don't clear cart or navigate yet
+                }
+
+                // === COD LOGIC ===
                 setCartItems([]);
                 localStorage.removeItem('cartItems');
-
                 toast.success("Order Placed Successfully!");
 
-                // Redirect based on user type
                 if (user) {
                     navigate('/my-orders');
                 } else {
-                    // For guests, show success page
                     navigate('/order-success');
                 }
             } else {
@@ -201,10 +185,7 @@ const Cart = () => {
 
         } catch (error) {
             console.error('❌ Order Error:', error.response?.data || error.message);
-
-            // Show detailed error message
-            const errorMsg = error.response?.data?.message || error.message || "Failed to place order";
-            toast.error(errorMsg);
+            toast.error(error.message || "Failed to place order");
         } finally {
             setGlobalLoading(false);
         }
