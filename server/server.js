@@ -11,6 +11,7 @@ import userRouter from './routes/userRoutes.js';
 import addressRouter from './routes/addressRoutes.js';
 import cartRouter from './routes/cartRoutes.js';
 import orderRouter from './routes/orderRoutes.js';
+import { stripeWebhook } from './controllers/orderController.js';
 
 const app = express()
 const PORT = process.env.BACKEND_URL || 4000
@@ -20,9 +21,15 @@ connectCloudinary()
 
 const allowedOrigin = ['http://localhost:5173']
 
+// Uses express.raw() to preserve the digital signature
+app.post('/api/order/webhook', express.raw({ type: 'application/json' }), stripeWebhook)
+
 app.use(express.json())
 app.use(cookieParser())
-app.use(cors({origin:allowedOrigin, credentials : true})) //we can send cookies in the response, in the express app
+app.use(cors({ 
+    origin: ['http://localhost:5173', 'https://your-frontend.vercel.app'], 
+    credentials: true 
+})); //we can send cookies in the response, in the express app
 
 app.get('/', (req, res) => { res.send ( 'API WORKING 🚀')})
 

@@ -92,6 +92,11 @@ export const placeOrder = async (req, res) => {
                 mode: 'payment',
                 success_url: `${process.env.FRONTEND_URL}/verify?success=true&orderId=${newOrder._id}`,
                 cancel_url: `${process.env.FRONTEND_URL}/verify?success=false&orderId=${newOrder._id}`,
+
+                metadata: {
+                    orderId: newOrder._id.toString(),
+                    userId: userId ? userId.toString() : ""
+                }
             });
 
             return res.json({ success: true, session_url: session.url });
@@ -103,6 +108,81 @@ export const placeOrder = async (req, res) => {
         console.error(error);
         res.status(500).json({ success: false, message: error.message });
     }
+}
+
+
+// STRIPE WEBHOOK (Handles Payment Verification)
+export const stripeWebhook = async (req, res) => {
+    
+    // Create a new instance to ensure clean config
+    const stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY);
+    const sig = req.headers["stripe-signature"];
+    let event;
+
+    try {
+        event = stripeInstance.webhooks.constructEvent(
+            req.body,
+            sig,
+            process.env.STRIPE_WEBHOOK_SECRET
+        );
+    } catch (error) {
+        console.error("Webhook Error:", error.message);
+        return res.status(400).send(`Webhook Error: ${error.message}`);
+    }
+
+    // Handle Events
+    switch (event.type) {
+        
+        case "payment_intent.succeeded": {
+            const paymentIntent = event.data.object;
+            const paymentIntentId = paymentIntent.id;
+
+            // Retrieve the Session to get our Metadata
+            const sessions = await stripeInstance.checkout.sessions.list({
+                payment_intent: paymentIntentId,
+            });
+
+            if (sessions.data.length > 0) {
+                const session = sessions.data[0];
+                const { orderId, userId } = session.metadata; // Reads metadata we sent in placeOrder
+
+                console.log(`💰 Payment Succeeded for Order: ${orderId}`);
+
+                // 1. Mark Order as Paid
+                await Order.findByIdAndUpdate(orderId, { 
+                    payment: true,
+                    status: 'Packing' 
+                });
+
+                // 2. Clear Cart (if user exists)
+                if (userId) {
+                    await Cart.findOneAndDelete({ userId });
+                }
+            }
+            break;
+        }
+
+        case "payment_intent.payment_failed": {
+            const paymentIntent = event.data.object;
+            const sessions = await stripeInstance.checkout.sessions.list({
+                payment_intent: paymentIntent.id,
+            });
+
+            if (sessions.data.length > 0) {
+                const { orderId } = sessions.data[0].metadata;
+                console.log(`❌ Payment Failed for Order: ${orderId}`);
+                
+                // Delete the temporary order since payment failed
+                await Order.findByIdAndDelete(orderId);
+            }
+            break;
+        }
+
+        default:
+            console.log(`Unhandled event type ${event.type}`);
+    }
+
+    res.json({ received: true });
 }
 
 
