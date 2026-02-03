@@ -19,7 +19,10 @@ const PORT = process.env.BACKEND_URL || 4000
 connectDB();
 connectCloudinary()
 
-const allowedOrigin = ['http://localhost:5173']
+const allowedOrigins = [
+    'http://localhost:5173',
+    process.env.FRONTEND_URL 
+];
 
 // Uses express.raw() to preserve the digital signature
 app.post('/api/order/webhook', express.raw({ type: 'application/json' }), stripeWebhook)
