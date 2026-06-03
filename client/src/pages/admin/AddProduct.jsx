@@ -6,6 +6,7 @@ import { CiSaveUp2 } from "react-icons/ci"
 import Spinner from '../../components/common/Spinner'
 import toast from 'react-hot-toast'
 import { productServices } from '../../services/productServices'
+import { compressImage } from '../../utils/imageCompressor'
 
 // Import reusable components
 import {
@@ -83,7 +84,7 @@ const AddProduct = () => {
   // IMAGE HANDLERS
   // ============================================
 
-  const addImage = (files) => {
+  const addImage = async (files) => {
     const remainingSlots = 4 - formData.images.length
 
     if (remainingSlots <= 0) {
@@ -92,10 +93,28 @@ const AddProduct = () => {
     }
 
     const allowedFiles = files.slice(0, remainingSlots)
-    setFormData(prev => ({
-      ...prev,
-      images: [...prev.images, ...allowedFiles]
-    }))
+    const compressionToast = toast.loading('Processing and compressing images...')
+
+    try {
+      const compressedFiles = await Promise.all(
+        allowedFiles.map(file => compressImage(file, 1200, 1200, 0.75))
+      )
+
+      setFormData(prev => ({
+        ...prev,
+        images: [...prev.images, ...compressedFiles]
+      }))
+
+      toast.success('Images compressed and added successfully!', { id: compressionToast })
+    } catch (error) {
+      console.error('Image compression error:', error)
+      toast.error('Failed to compress images. Adding original files.', { id: compressionToast })
+      
+      setFormData(prev => ({
+        ...prev,
+        images: [...prev.images, ...allowedFiles]
+      }))
+    }
 
     if (files.length > remainingSlots) {
       toast.error(`Only ${remainingSlots} image(s) added`)
